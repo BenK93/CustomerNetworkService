@@ -1,0 +1,14 @@
+Creating Virtual Environment and running without Docker
+    python3 -m venv venv
+    source venv/bin/activate
+    pip3 install requirements.txt
+    python3 manage.py runserver
+Part#1
+docker build --tag python-django-cc .
+docker run --publish 8000:8000 python-django-cc
+Part#2
+docker-compose build
+docker-compose run --rm app django-admin startproject core .
+docker-compose up
+
+
