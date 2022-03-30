@@ -3,14 +3,21 @@ from rest_framework import permissions, status, viewsets
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.response import Response
 
-from customers.api.serializers.customerSerializer import CustomerSerializer
+from customers.api.serializers.customersSerializers import  CustomerRetrieveSerializer, \
+    CustomerCreateSerializer
 from customers.models import Customer
 
-
+# to creator boundary
 class CustomerViewSet(viewsets.ModelViewSet):
     queryset = Customer.objects.all()
-    serializer_class = CustomerSerializer
     permission_classes = [permissions.AllowAny, ]
+
+    def get_serializer_class(self):
+        if self.action == 'create':
+            return CustomerCreateSerializer
+        if self.action == 'retrieve':
+            return CustomerRetrieveSerializer
+        return CustomerCreateSerializer
 
     def create(self, request, *args, **kwargs):
         customer = Customer.objects.filter(email=request.data['email'])
@@ -20,15 +27,35 @@ class CustomerViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
-            return Response(serializer.data,status=status.HTTP_201_CREATED)
+            response = serializer.data
+            del response['password']
+            return Response(response, status=status.HTTP_201_CREATED)
+
+    # def list(self, request, *args, **kwargs):
+    #     return Response({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class CustomerRetrieve(RetrieveAPIView):
+# getter boundary
+class CustomerRetrieveByEmail(RetrieveAPIView):
     queryset = Customer.objects.all()
-    serializer_class = CustomerSerializer
+    serializer_class = CustomerRetrieveSerializer
     lookup_field = 'email'
 
-    # def retrieve(self, request, *args, **kwargs):
-    #     instance = self.get_object()
-    #     serializer = self.get_serializer(instance)
-    #     return Response(serializer.data)
+
+class CustomerLogin(RetrieveAPIView):
+    queryset = Customer.objects.all()
+    serializer_class = CustomerRetrieveSerializer
+    lookup_field = 'email'
+
+    def retrieve(self, request, *args, **kwargs):
+        password = request.query_params.get('password', None)
+        if not password:
+            response = {"details": "no password were given"}
+            return Response(response, status=status.HTTP_400_BAD_REQUEST)
+
+        instance = self.get_object()
+        if password != instance.password:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
