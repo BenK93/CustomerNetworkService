@@ -15,6 +15,7 @@ class CustomerRetrieveSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
         fields = ['email', 'name', 'birthdate', 'role']
+        # lookup_field = 'email'
 
 class CustomerCreateSerializer(serializers.ModelSerializer):
     name = NameSerializer(many=False)
@@ -22,6 +23,7 @@ class CustomerCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = Customer
         fields = ['email', 'password', 'name', 'birthdate', 'role']
+        lookup_field = 'email'
 
     def create(self, validated_data):
         name_data = validated_data.pop('name')

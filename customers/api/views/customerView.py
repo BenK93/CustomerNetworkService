@@ -11,6 +11,7 @@ from customers.models import Customer
 class CustomerViewSet(viewsets.ModelViewSet):
     queryset = Customer.objects.all()
     permission_classes = [permissions.AllowAny, ]
+    lookup_field = 'email'
 
     def get_serializer_class(self):
         if self.action == 'create':
@@ -22,7 +23,7 @@ class CustomerViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         customer = Customer.objects.filter(email=request.data['email'])
         if customer:
-            return Response({},status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
             serializer = self.get_serializer(data=request.data)
             serializer.is_valid(raise_exception=True)
@@ -31,8 +32,10 @@ class CustomerViewSet(viewsets.ModelViewSet):
             del response['password']
             return Response(response, status=status.HTTP_201_CREATED)
 
-    # def list(self, request, *args, **kwargs):
-    #     return Response({}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    # def retrieve(self, request, *args, **kwargs):
+    #     print('^^^^^^^^^^^^^^^')
+    #     print(kwargs['pk'])
+    #     return Response({}, status=status.HTTP_404_NOT_FOUND)
 
 
 # getter boundary
@@ -40,6 +43,9 @@ class CustomerRetrieveByEmail(RetrieveAPIView):
     queryset = Customer.objects.all()
     serializer_class = CustomerRetrieveSerializer
     lookup_field = 'email'
+
+
+
 
 
 class CustomerLogin(RetrieveAPIView):
