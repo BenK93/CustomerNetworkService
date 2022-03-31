@@ -9,8 +9,12 @@ ROLES = ((1, 'goldCustomer'),
 
 
 class Name(models.Model):
-    last = models.CharField(max_length=255, blank=False)
+    class Meta:
+        constraints = (
+            models.UniqueConstraint(fields=['first', 'last'], name='full_name'),
+        )
     first = models.CharField(max_length=255, blank=False)
+    last = models.CharField(max_length=255, blank=False)
 
     def __str__(self):
         return f'{self.first} {self.last}'
