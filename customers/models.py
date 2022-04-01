@@ -1,11 +1,6 @@
 from django.db import models
-from multiselectfield import MultiSelectField
-# Create your models here.
-from core import settings
 
-ROLES = ((1, 'goldCustomer'),
-         (2, 'platinumClub'),
-         (3, 'primeService'),)
+# Create your models here.
 
 
 class Name(models.Model):
@@ -13,11 +8,19 @@ class Name(models.Model):
         constraints = (
             models.UniqueConstraint(fields=['first', 'last'], name='full_name'),
         )
+
     first = models.CharField(max_length=255, blank=False)
     last = models.CharField(max_length=255, blank=False)
 
     def __str__(self):
         return f'{self.first} {self.last}'
+
+
+class Role(models.Model):
+    title = models.CharField(max_length=255, blank=False)
+
+    def __str__(self):
+        return self.title
 
 
 class Customer(models.Model):
@@ -26,12 +29,7 @@ class Customer(models.Model):
     friends = models.ManyToManyField('self', blank=True)
     name = models.ForeignKey(Name, on_delete=models.CASCADE, blank=False, default=None)
     birthdate = models.DateField(default=None)
-    role = models.CharField(max_length=255)
+    roles = models.ManyToManyField(Role, blank=True)
 
     def __str__(self):
         return f'{self.name} - {self.email}'
-
-
-
-
-
