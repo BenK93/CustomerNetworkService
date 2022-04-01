@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 from rest_framework import permissions, status, viewsets
 from rest_framework.generics import RetrieveAPIView
 from rest_framework.response import Response
 
 from customers.api.serializers.customersSerializers import CustomerCreateSerializer, CustomerRetrieveSerializer
-from customers.models import Customer
+from customers.models import Customer, Role
 
 
 # to creator boundary
@@ -26,12 +28,21 @@ class CustomerViewSet(viewsets.ModelViewSet):
         if customer:
             return Response(status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         else:
-            serializer = self.get_serializer(data=request.data)
+            data = request.data
+            data['roles'] = _convert_roles_to_object(data['roles'])
+            serializer = self.get_serializer(data=data)
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
             response = serializer.data
             del response['password']
             return Response(response, status=status.HTTP_201_CREATED)
+
+
+def _convert_roles_to_object(roles_array: list[str]) -> list[dict[str, str]]:
+    """
+    Converts the roles array we get in the json to objects array where every object represents a role.
+    """
+    return [{"title": value} for value in roles_array]
 
 
 # getter boundary
