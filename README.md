@@ -14,7 +14,7 @@
    ### On New Terminal Window
    1. `docker exec -it <CONTAINER_ID> python manage.py makemigrations`
    1. `docker exec -it <CONTAINER_ID> python manage.py migrate`
-   1. docker exec -it 7680d80ea1a7 python manage.py migrate --run-syncdb
+   1. `docker exec -it <CONTAINER_ID> python manage.py migrate --run-syncdb`
 
 
    ## Running on VM:

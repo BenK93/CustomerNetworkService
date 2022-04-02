@@ -33,6 +33,21 @@ class CustomerRetrieveSerializer(serializers.ModelSerializer):
         return temp_data
 
 
+class CustomerRetrieveFriendsSerializer(serializers.ModelSerializer):
+    friends = CustomerRetrieveSerializer(many=True)
+
+    class Meta:
+        model = Customer
+        fields = ['friends']
+
+    @property
+    def data(self):
+        temp_data = super().data
+        # Cast the roles array to a strings array.
+        for friend in temp_data['friends']:
+            friend['roles'] = [value['title'] for value in friend['roles']]
+        return temp_data
+
 class CustomerCreateSerializer(serializers.ModelSerializer):
     name = NameSerializer(many=False)
     roles = RoleSerializer(many=True)
@@ -45,7 +60,6 @@ class CustomerCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         name = _resolve_name(validated_data.pop('name'))
         roles = validated_data.pop('roles')
-
         customer = Customer.objects.create(name=name, **validated_data)
         _resolve_roles(customer, roles)
         customer.save()
@@ -58,18 +72,43 @@ class CustomerCreateSerializer(serializers.ModelSerializer):
         return temp_data
 
 
+class CustomerUpdateSerializer(serializers.ModelSerializer):
+    name = NameSerializer(many=False)
+    roles = RoleSerializer(many=True)
+
+    class Meta:
+        model = Customer
+        fields = ['password', 'name', 'birthdate', 'roles']
+        lookup_field = 'email'
+
+    def update(self, instance, validated_data):
+        name = _resolve_name(validated_data.pop('name'))
+        roles = validated_data.pop('roles')
+        instance.name = name
+        _resolve_roles(instance, roles)
+        return super().update(instance, validated_data)
+
+
+class CustomerFriendsSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Customer
+        fields = ['email']
+        lookup_field = 'email'
+
+
 def _resolve_name(name_data: Mapping) -> Name:
     name = Name.objects.filter(**name_data).first()
     if not name:
         name = Name(
-                first=name_data['first'],
-                last=name_data['last']
+            first=name_data['first'],
+            last=name_data['last']
         )
         name.save()
     return name
 
 
 def _resolve_roles(customer: Customer, roles_data):
+    customer.roles.clear()
     for role in roles_data:
         role_obj = Role.objects.filter(**role).first()
         if not role_obj:
