@@ -1,15 +1,15 @@
 from __future__ import annotations
 
-from rest_framework import permissions, status, viewsets, mixins
+from rest_framework import permissions, status, viewsets
 from rest_framework.decorators import api_view
 from rest_framework.generics import RetrieveAPIView, UpdateAPIView
 from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 
 from customers.api.helpers.paginatiions import CustomPagination
-from customers.api.serializers.customersSerializers import CustomerCreateSerializer, CustomerRetrieveSerializer, \
-    CustomerUpdateSerializer, CustomerFriendsSerializer, CustomerRetrieveFriendsSerializer
-from customers.models import Customer, Role
+from customers.api.serializers.customersSerializers import CustomerCreateSerializer, CustomerFriendsSerializer, \
+    CustomerRetrieveFriendsSerializer, CustomerRetrieveSerializer, CustomerUpdateSerializer
+from customers.models import Customer
 
 
 # to creator boundary
@@ -95,20 +95,33 @@ class CustomersSearchView(RetrieveAPIView):
     serializer_class = CustomerRetrieveSerializer
 
     def retrieve(self, request, *args, **kwargs):
-        page, size, sortBy, sortOrder = int(request.query_params.get('page', 0)) , int(request.query_params.get('size', 1)), \
-                request.query_params.get('sortBy', 'email'), request.query_params.get('sortOrder', 'ASC')
-        data = []
-        for customer in self.get_queryset().values():
-            serializer = self.get_serializer(data=customer)
-            print(customer)
-            serializer.is_valid(raise_exception=True)
-            print(serializer.data)
-            data.append(serializer.data)
-        print(data)
-        serializer = self.get_serializer(data=list(self.get_queryset().values()), many=True)
-        serializer.is_valid(raise_exception=True)
-        print(serializer.data)
+        page, size, sort_by, sort_order = int(request.query_params.get('page', 0)), int(
+                request.query_params.get('size', 1)), \
+                                          request.query_params.get('sortBy', 'email'), request.query_params.get(
+                'sortOrder', 'ASC')
+        if sort_by == 'name':
+            sort_fields = ['name__first', 'name__last']
+        elif sort_by == "roles":
+            # Note: This doesn't make sense. roles is a collection so ordering based on it is
+            sort_fields = ['roles__title']
+        else:
+            sort_fields = [sort_by]
+        if sort_order == 'DESC':
+            for i in range(len(sort_fields)):
+                sort_fields[i] = f'-{sort_fields[i]}'
 
+        queryset = self.get_queryset().order_by(*sort_fields)
+        if request.query_params.get('criteriaType', '') == 'byEmailDomain':
+            queryset = queryset.filter(email__endswith=request.query_params['criteriaValue'])
+        elif request.query_params.get('criteriaType', '') == 'byBirthYear':
+            queryset = queryset.filter(birthdate__year=request.query_params['criteriaValue'])
+        print(queryset.query)
+        customers = map(lambda customer: self.get_serializer(customer).data,
+                        queryset[page * size: (page + 1) * size])
+        # sorted_customers = sorted(customers, key=lambda x: x[sort_by], reverse=sort_order == 'DESC')
+        # paginated_customers = sorted_customers[page * size: (page + 1) * size]
+        # paginated_customers = list(customers)
+        return Response(customers, status=status.HTTP_200_OK)
 
 
 class CustomerRetrieveByEmail(RetrieveAPIView):
@@ -129,6 +142,7 @@ class CustomerLogin(RetrieveAPIView):
             return Response(response, status=status.HTTP_400_BAD_REQUEST)
 
         instance = self.get_object()
+        print(instance, type(instance))
         if password != instance.password:
             return Response(status=status.HTTP_404_NOT_FOUND)
         serializer = self.get_serializer(instance)
