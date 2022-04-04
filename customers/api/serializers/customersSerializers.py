@@ -48,6 +48,7 @@ class CustomerRetrieveFriendsSerializer(serializers.ModelSerializer):
             friend['roles'] = [value['title'] for value in friend['roles']]
         return temp_data
 
+
 class CustomerCreateSerializer(serializers.ModelSerializer):
     name = NameSerializer(many=False)
     roles = RoleSerializer(many=True)
@@ -100,8 +101,8 @@ def _resolve_name(name_data: Mapping) -> Name:
     name = Name.objects.filter(**name_data).first()
     if not name:
         name = Name(
-            first=name_data['first'],
-            last=name_data['last']
+                first=name_data['first'],
+                last=name_data['last']
         )
         name.save()
     return name

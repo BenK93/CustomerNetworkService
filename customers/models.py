@@ -25,7 +25,7 @@ class Role(models.Model):
 
 class Customer(models.Model):
     email = models.CharField(max_length=255, unique=True, primary_key=True)
-    password = models.CharField(max_length=100, default="password", blank=False)
+    password = models.CharField(max_length=100, blank=False)
     friends = models.ManyToManyField('self', blank=True)
     name = models.ForeignKey(Name, on_delete=models.CASCADE, blank=False, default=None)
     birthdate = models.DateField(default=None)
