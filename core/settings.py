@@ -40,7 +40,6 @@ INSTALLED_APPS = [
     'core',
     'rest_framework',
     'customers',
-    'multiselectfield',
 ]
 
 MIDDLEWARE = [
