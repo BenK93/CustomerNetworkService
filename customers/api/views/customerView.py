@@ -115,12 +115,10 @@ class CustomersSearchView(RetrieveAPIView):
             queryset = queryset.filter(email__endswith=request.query_params['criteriaValue'])
         elif request.query_params.get('criteriaType', '') == 'byBirthYear':
             queryset = queryset.filter(birthdate__year=request.query_params['criteriaValue'])
-        print(queryset.query)
+        elif request.query_params.get('criteriaType', '') == 'byRole':
+            queryset = queryset.filter(roles__title=request.query_params['criteriaValue'])
         customers = map(lambda customer: self.get_serializer(customer).data,
                         queryset[page * size: (page + 1) * size])
-        # sorted_customers = sorted(customers, key=lambda x: x[sort_by], reverse=sort_order == 'DESC')
-        # paginated_customers = sorted_customers[page * size: (page + 1) * size]
-        # paginated_customers = list(customers)
         return Response(customers, status=status.HTTP_200_OK)
 
 
