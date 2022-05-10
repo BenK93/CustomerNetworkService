@@ -1,5 +1,7 @@
-FROM python:3.8-slim-buster
+FROM python:3
 ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
 WORKDIR /django
-COPY requirements.txt requirements.txt
+COPY requirements.txt /django/
 RUN pip3 install -r requirements.txt
+COPY . /django/
